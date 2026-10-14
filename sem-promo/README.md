@@ -47,3 +47,32 @@ The final render includes a feature only when it is marked `"verified": true`
 The preview shows unverified features with a “VERIFY FEATURE EXISTS” badge.
 
 Recordings, audio and `build/` are git-ignored.
+
+---
+
+# Tutorial video — “Getting Started with Sem”
+
+`tutorial/` builds an ~82 s narrated tutorial from the real Sem screen
+recording in the repo root, fully from code:
+
+```bash
+sudo apt-get install festival festvox-us-slt-hts   # offline narration voice
+cd sem-promo/tutorial
+node build.mjs                 # → build/tutorial/sem-tutorial.mp4 + .srt
+node build.mjs --still 41      # one frame, for layout checks
+```
+
+- **Steps** live in `tutorial/tutorial.json`: per step a camera `view`
+  (source-pixel rect to zoom into), `callouts`, an on-screen `caption` and the
+  narration text `say`. Step lengths follow the narration automatically.
+- **Narration** is synthesised with Festival (`voice` in the JSON), cleaned up
+  with ffmpeg, and also written out as an `.srt` subtitle file.
+- **Sem's own voice** comes from the recording during the `play` step.
+- **Music** is a soft generated chord pad, ducked under all speech.
+- **Privacy:** `privacyMasks` cover the browser bookmarks bar and profile
+  picture visible in the recording.
+
+Everything described in the narration is visible in the recording (address,
+avatar with spoken replies and subtitles, message box and send arrow,
+microphone/speaker button, top-right toolbar). The toolbar icons' individual
+functions are not narrated because the recording doesn't demonstrate them.

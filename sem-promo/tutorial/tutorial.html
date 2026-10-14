@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sem Tutorial — Frames</title>
+<!--
+  Deterministic frame renderer for the Sem tutorial. build.mjs calls
+  window.init(timeline) once, then `await window.renderAt(t)` per frame.
+  All footage is the real Sem screen recording; this page only zooms into it
+  and draws callouts, captions and title cards on top.
+-->
+<style>
+  :root {
+    --forest-900: #03110c;
+    --forest-800: #062019;
+    --emerald: #10b981;
+    --emerald-soft: #34d399;
+    --gold: #d4af37;
+    --gold-light: #f5df8e;
+    --gold-deep: #9c7a1c;
+    --ivory: #f3ecd6;
+    --muted: #a9c2b7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--forest-900); color: var(--ivory);
+    font-family: 'Inter Display', 'Inter', 'DejaVu Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  .layer { position: absolute; inset: 0; }
+
+  #cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  #cam img { display: block; }
+  .mask { position: absolute; }
+  #edge { position: absolute; left: 0; right: 0; top: 900px; height: 122px; background: linear-gradient(180deg, transparent, var(--forest-900)); }
+
+  #vignette { background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  #shade { background: linear-gradient(180deg, rgba(3,17,12,.25), rgba(3,17,12,.75)); }
+
+  .callout { position: absolute; border: 4px solid var(--gold); border-radius: 14px;
+    box-shadow: 0 0 0 9999px rgba(3,17,12,.0), 0 0 28px rgba(212,175,55,.55), inset 0 0 18px rgba(212,175,55,.25); }
+  .callout.round { border-radius: 50%; }
+  .callout .lbl { position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translateX(-50%); white-space: nowrap;
+    background: linear-gradient(135deg, #0d5c43, #08372a); border: 1px solid rgba(245,223,142,.6); color: var(--gold-light);
+    font-size: 30px; font-weight: 600; padding: 8px 22px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .callout.below .lbl { bottom: auto; top: calc(100% + 16px); }
+  .callout.right .lbl { bottom: auto; top: 50%; left: calc(100% + 18px); transform: translateY(-50%); }
+
+  #badge { position: absolute; left: 56px; top: 48px; display: flex; align-items: center; gap: 18px;
+    background: rgba(4,22,16,.86); border: 1px solid rgba(212,175,55,.4); border-radius: 40px; padding: 10px 30px 10px 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.45); }
+  #badge .num { height: 56px; min-width: 56px; padding: 0 16px; border-radius: 28px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold) 55%, var(--gold-deep)); color: #1b1606; font-weight: 800; font-size: 24px; letter-spacing: .08em; }
+  #badge .name { font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+
+  #rec { position: absolute; right: 56px; top: 56px; display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600; letter-spacing: .06em;
+    background: rgba(4,22,16,.86); border: 1px solid rgba(16,185,129,.5); padding: 10px 20px; border-radius: 24px; color: var(--emerald-soft); }
+  #rec i { width: 12px; height: 12px; border-radius: 50%; background: #ef4444; display: inline-block; }
+
+  #caption { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: 1600px; text-align: center;
+    background: rgba(4,22,16,.9); border: 1px solid rgba(212,175,55,.35); border-radius: 22px; padding: 18px 40px;
+    font-size: 40px; font-weight: 600; line-height: 1.3; box-shadow: 0 16px 50px rgba(0,0,0,.5); }
+  .hl { background: linear-gradient(100deg, var(--gold-deep), var(--gold-light) 45%, var(--gold) 70%, var(--gold-deep));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  #title { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 26px; }
+  #title .mark { font-size: 150px; font-weight: 800; letter-spacing: -0.045em; line-height: 1;
+    background: linear-gradient(115deg, #0e7a57 0%, var(--emerald-soft) 30%, var(--gold-light) 55%, var(--gold) 70%, var(--gold-deep) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 40px rgba(16,185,129,.35)); }
+  #title .rule { height: 2px; width: 380px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  #title h1 { font-size: 88px; font-weight: 700; letter-spacing: -0.02em; text-shadow: 0 6px 40px rgba(0,0,0,.5); }
+  #title p { font-size: 38px; color: var(--muted); font-weight: 500; }
+
+  #progress { position: absolute; left: 0; bottom: 0; height: 6px; background: linear-gradient(90deg, var(--emerald), var(--gold)); }
+  #black { background: #000; }
+</style>
+</head>
+<body>
+  <div id="cam"><img id="frame" alt=""><div id="masks"></div><div id="edge"></div></div>
+  <div id="shade" class="layer"></div>
+  <div id="vignette" class="layer"></div>
+  <div id="callouts" class="layer"></div>
+  <div id="badge"><div class="num"></div><div class="name"></div></div>
+  <div id="rec"><i></i><span></span></div>
+  <div id="caption"></div>
+  <div id="title" class="layer"><div class="mark">Sem</div><div class="rule"></div><h1></h1><p></p></div>
+  <div id="progress"></div>
+  <div id="black" class="layer"></div>
+
+<script>
+  let TL = null;
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const easeOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+  const easeInOut = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const rich = (s) => esc(s).replace(/\*(.+?)\*/g, '<span class="hl">$1</span>');
+  const ZOOM = 1.1;   // seconds for the camera move into each step
+  let lastSrc = '';
+
+  window.init = (timeline) => {
+    TL = timeline;
+    const [sw, sh] = TL.sourceSize;
+    $('frame').width = sw; $('frame').height = sh;
+    $('masks').innerHTML = TL.privacyMasks.map((m) =>
+      `<div class="mask" style="left:${m.rect[0]}px;top:${m.rect[1]}px;width:${m.rect[2]}px;height:${m.rect[3]}px;background:${m.color}"></div>`).join('');
+  };
+
+  /** Camera rect (source coords) at time t, easing from the previous step's view. */
+  function viewAt(i, t) {
+    const s = TL.steps[i];
+    const prev = TL.steps[i - 1];
+    if (!prev) return s.view;
+    const k = easeInOut((t - s.start) / ZOOM);
+    return s.view.map((v, j) => lerp(prev.view[j], v, k));
+  }
+
+  window.renderAt = async (t) => {
+    let i = TL.steps.findIndex((s) => t >= s.start && t < s.end);
+    if (i < 0) i = TL.steps.length - 1;
+    const s = TL.steps[i];
+    const local = t - s.start;
+
+    // Footage: a frozen frame, or real-time playback for "play" steps.
+    const srcT = s.kind === 'play' ? s.play[0] + Math.min(local, s.play[1] - s.play[0]) : s.frame;
+    const idx = Math.min(TL.frameCount, Math.max(1, Math.round(srcT * TL.fps) + 1));
+    const src = `${TL.framesUrl}/${String(idx).padStart(5, '0')}.jpg`;
+    if (src !== lastSrc) {
+      const img = $('frame');
+      img.src = src;
+      await img.decode();
+      lastSrc = src;
+    }
+
+    const [vx, vy, vw] = viewAt(i, t);
+    const scale = TL.width / vw;
+    $('cam').style.transform = `scale(${scale}) translate(${-vx}px, ${-vy}px)`;
+    const toScreen = ([x, y, w, h]) => [(x - vx) * scale, (y - vy) * scale, w * scale, h * scale];
+
+    // Title cards blur and darken the footage behind them.
+    const isTitle = s.kind === 'title';
+    const titleOp = isTitle ? Math.min(easeOut(local / .8), easeOut((s.end - t) / .6)) : 0;
+    const blurK = isTitle ? Math.max(titleOp, i === 0 ? 1 : 0) : 0;
+    $('cam').style.filter = `blur(${blurK * 16}px) brightness(${1 - blurK * .55})`;
+    $('shade').style.opacity = blurK;
+    $('title').style.opacity = titleOp;
+    if (isTitle) {
+      $('title').querySelector('h1').innerHTML = rich(s.heading);
+      $('title').querySelector('p').textContent = s.sub || '';
+      $('title').style.transform = `translateY(${(1 - easeOut(local / 1)) * 20}px)`;
+    }
+
+    // Callouts appear once the camera has settled.
+    const calloutOp = Math.min(easeOut((local - ZOOM) / .45), easeOut((s.end - t) / .35));
+    $('callouts').innerHTML = (s.callouts || []).map((c, k) => {
+      const [x, y, w, h] = toScreen(c.rect);
+      const pad = 10;
+      const o = Math.min(calloutOp, easeOut((local - ZOOM - k * .5) / .45));
+      const pulse = 1 + Math.sin((local - ZOOM) * 4) * .015;
+      return `<div class="callout ${c.round ? 'round' : ''} ${c.side || ''}" style="left:${x - pad}px;top:${y - pad}px;` +
+        `width:${w + pad * 2}px;height:${h + pad * 2}px;opacity:${o};transform:scale(${o > 0 ? pulse : 1})">` +
+        `<div class="lbl">${esc(c.text)}</div></div>`;
+    }).join('');
+
+    // Step badge.
+    const showBadge = !isTitle && s.label;
+    const badgeOp = showBadge ? Math.min(easeOut((t - s.groupStart) / .5), easeOut((s.groupEnd - t) / .4)) : 0;
+    $('badge').style.opacity = badgeOp;
+    if (showBadge) {
+      $('badge').querySelector('.num').textContent = s.n ? `STEP ${s.n}` : 'LIVE';
+      $('badge').querySelector('.name').textContent = s.label;
+    }
+
+    // "Real recording" badge during playback.
+    $('rec').style.opacity = s.badge ? Math.min(easeOut(local / .4), easeOut((s.end - t) / .3)) : 0;
+    if (s.badge) $('rec').querySelector('span').textContent = s.badge;
+
+    // Instruction caption.
+    $('caption').style.opacity = s.caption ? Math.min(easeOut((local - .3) / .5), easeOut((s.end - t) / .4)) : 0;
+    if (s.caption) $('caption').innerHTML = rich(s.caption);
+
+    $('progress').style.width = `${(t / TL.duration) * 100}%`;
+    $('black').style.opacity = clamp(1 - t / .5) + clamp((t - (TL.duration - .8)) / .8);
+  };
+</script>
+</body>
+</html>

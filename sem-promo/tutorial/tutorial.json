@@ -1,0 +1,162 @@
+{
+  "title": "Getting Started with Sem",
+  "source": "../../SEM — AI Companion _ Developed by Semdok - Google Chrome 2026-09-19 14-04-11.mp4",
+  "sourceSize": [1920, 1020],
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "voice": "cmu_us_slt_arctic_hts",
+  "privacyMasks": [
+    {
+      "rect": [0, 104, 1920, 47],
+      "color": "rgb(34,127,99)",
+      "note": "bookmarks bar"
+    },
+    {
+      "rect": [1826, 58, 44, 44],
+      "color": "rgb(34,127,99)",
+      "note": "browser profile picture"
+    }
+  ],
+  "steps": [
+    {
+      "id": "intro",
+      "kind": "title",
+      "frame": 11.0,
+      "view": [0, -30, 1920, 1080],
+      "heading": "Getting Started with *Sem*",
+      "sub": "A quick tutorial · live.semdok.com",
+      "say": "Welcome! In this quick tutorial, you'll learn how to start talking with Sem, the AI companion by Sem dock."
+    },
+    {
+      "id": "open",
+      "label": "Open Sem",
+      "frame": 11.0,
+      "view": [0, -110, 1100, 619],
+      "callouts": [
+        {
+          "rect": [196, 60, 330, 40],
+          "text": "live.semdok.com",
+          "side": "below"
+        }
+      ],
+      "caption": "Go to *live.semdok.com* in your browser.",
+      "say": "Step one. Open your browser and go to live dot sem dock dot com. Sem runs right in the web page, so there is nothing to install.",
+      "n": 1
+    },
+    {
+      "id": "meet",
+      "label": "Meet Sem",
+      "frame": 11.0,
+      "view": [186, 150, 1548, 870],
+      "callouts": [
+        {
+          "rect": [650, 260, 460, 520],
+          "text": "Your AI companion"
+        }
+      ],
+      "caption": "Sem answers out loud, with *subtitles* on screen.",
+      "say": "Step two. Meet Sem. Sem is an animated companion who answers you out loud, and shows the reply as subtitles so you can read along.",
+      "n": 2
+    },
+    {
+      "id": "type",
+      "label": "Type a question",
+      "frame": 11.0,
+      "view": [560, 640, 800, 450],
+      "callouts": [
+        {
+          "rect": [702, 826, 410, 58],
+          "text": "Type here",
+          "side": "below"
+        },
+        {
+          "rect": [1116, 830, 48, 48],
+          "text": "Send",
+          "round": true,
+          "side": "right"
+        }
+      ],
+      "caption": "Click *Ask Sem or request showcase…*, type, then press *send*.",
+      "say": "Step three. To type a question, click the box that says, Ask Sem or request showcase. Write your message, then press the send arrow.",
+      "n": 3
+    },
+    {
+      "id": "voice",
+      "label": "Talk with your voice",
+      "frame": 11.0,
+      "view": [560, 700, 800, 450],
+      "callouts": [
+        {
+          "rect": [922, 898, 78, 78],
+          "text": "Microphone",
+          "round": true,
+          "side": "right"
+        }
+      ],
+      "caption": "Prefer talking? Use the round *microphone* button.",
+      "say": "Step four. Prefer to talk? Use the round microphone button below the box. If your browser asks, allow microphone access, then simply speak.",
+      "n": 4
+    },
+    {
+      "id": "listen-intro",
+      "label": "Sem replies",
+      "frame": 11.0,
+      "view": [186, 150, 1548, 870],
+      "caption": "Here's Sem answering a real voice check.",
+      "say": "Here's Sem answering a real voice check. Listen."
+    },
+    {
+      "id": "listen",
+      "label": "Sem replies",
+      "kind": "play",
+      "play": [6.3, 10.6],
+      "view": [186, 150, 1548, 870],
+      "badge": "Real recording · live.semdok.com"
+    },
+    {
+      "id": "speaking",
+      "label": "Sem replies",
+      "frame": 7.6,
+      "view": [440, 560, 1040, 585],
+      "callouts": [
+        {
+          "rect": [570, 742, 790, 58],
+          "text": "Subtitles"
+        },
+        {
+          "rect": [922, 898, 78, 78],
+          "text": "Speaking",
+          "round": true,
+          "side": "right"
+        }
+      ],
+      "caption": "While Sem talks, the button shows a *speaker* icon.",
+      "say": "While Sem is talking, the round button shows a speaker icon, and the reply appears as subtitles above the message box."
+    },
+    {
+      "id": "toolbar",
+      "label": "Explore the toolbar",
+      "frame": 11.0,
+      "view": [1400, 120, 520, 292],
+      "callouts": [
+        {
+          "rect": [1490, 182, 400, 64],
+          "text": "Tools & settings"
+        }
+      ],
+      "caption": "More tools and *settings* live in the top-right toolbar.",
+      "say": "Step five. The toolbar in the top right corner holds more of Sem's tools, including settings. Explore it whenever you're ready.",
+      "n": 5
+    },
+    {
+      "id": "outro",
+      "kind": "title",
+      "frame": 11.0,
+      "view": [0, -30, 1920, 1080],
+      "heading": "Start talking with *Sem*",
+      "sub": "live.semdok.com",
+      "say": "That's it! Open live dot sem dock dot com and start your first conversation with Sem."
+    }
+  ]
+}
