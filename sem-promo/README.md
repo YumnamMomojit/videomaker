@@ -52,12 +52,12 @@ Recordings, audio and `build/` are git-ignored.
 
 # Tutorial video — “Getting Started with Sem”
 
-`tutorial/` builds an ~82 s narrated tutorial from the real Sem screen
+`tutorial/` builds an ~80 s narrated tutorial from the real Sem screen
 recording in the repo root, fully from code:
 
 ```bash
-sudo apt-get install festival festvox-us-slt-hts   # offline narration voice
 cd sem-promo/tutorial
+voice/setup_voice.sh           # one-time: Kokoro model + voices from npm, Python venv
 node build.mjs                 # → build/tutorial/sem-tutorial.mp4 + .srt
 node build.mjs --still 41      # one frame, for layout checks
 ```
@@ -65,8 +65,16 @@ node build.mjs --still 41      # one frame, for layout checks
 - **Steps** live in `tutorial/tutorial.json`: per step a camera `view`
   (source-pixel rect to zoom into), `callouts`, an on-screen `caption` and the
   narration text `say`. Step lengths follow the narration automatically.
-- **Narration** is synthesised with Festival (`voice` in the JSON), cleaned up
-  with ffmpeg, and also written out as an `.srt` subtitle file.
+- **Narration** uses a Kokoro-82M neural voice tuned to sound like Sem
+  (`tts` in `tutorial.json` → `voice/sem_voice.json`): a blend of stock
+  Kokoro voices (af_sarah, af_kore, af_aoede, af_heart), speed 0.93 and a
+  light EQ toward Sem's recorded tone. It was picked from ~270 measured
+  candidates by speaker similarity to Sem's real voice (Resemblyzer) plus
+  pitch, intonation and pace: ~0.82 similarity on the tutorial lines versus
+  0.62 for the old Festival voice. To fall back to Festival, set
+  `"tts": {"engine": "festival", "voice": "cmu_us_slt_arctic_hts"}` and
+  `apt-get install festival festvox-us-slt-hts`. The narration is also
+  written out as an `.srt` subtitle file.
 - **Sem's own voice** comes from the recording during the `play` step.
 - **Music** is a soft generated chord pad, ducked under all speech.
 - **Privacy:** `privacyMasks` cover the browser bookmarks bar and profile
