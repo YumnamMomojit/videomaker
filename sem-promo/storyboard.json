@@ -1,0 +1,163 @@
+{
+  "title": "Stop Just Chatting with AI — Start Working with Sem",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "duration": 90,
+  "url": "https://live.semdok.com",
+  "contentRect": [288, 118, 1344, 756],
+
+  "genericChat": {
+    "from": 0,
+    "to": 5.4,
+    "question": "What's the capital of Australia?",
+    "answer": "The capital of Australia is Canberra.",
+    "followUp": "And what about its popul"
+  },
+
+  "logos": [
+    { "from": 7.6, "to": 10.2, "y": 0, "scale": 1 },
+    { "from": 76.0, "to": 78.9, "y": 0, "scale": 1 },
+    { "from": 84.6, "to": 90, "y": -170, "scale": 0.55 }
+  ],
+
+  "hero": [
+    { "from": 1.4, "to": 5.2, "text": "AI can answer your questions.", "size": "m", "y": 420 },
+    { "from": 5.4, "to": 7.6, "text": "But what if AI could help you *get things done?*", "size": "l", "y": 0 },
+    { "from": 78.9, "to": 84.6, "text": "Stop Just Chatting with AI.", "size": "l", "y": -60 },
+    { "from": 80.7, "to": 84.6, "text": "Start Working with *Sem.*", "size": "l", "y": 60 },
+    { "from": 85.0, "to": 90, "text": "SEM — *Your AI. Live.*", "size": "l", "y": 10 },
+    { "from": 85.6, "to": 90, "text": "Explore Sem at *live.semdok.com*", "size": "s", "y": 105 },
+    { "from": 86.8, "to": 90, "text": "Discover what you can do with Sem.", "size": "xs", "y": 175 }
+  ],
+
+  "window": { "from": 10.0, "to": 76.0 },
+
+  "captions": [
+    { "from": 11.0, "to": 19.8, "text": "Meet Sem — your AI assistant by *SEMDOK.*" },
+    { "from": 20.2, "to": 34.8, "text": "Ask. Explore. Learn. Create.", "stagger": 3.0 },
+    { "from": 35.2, "to": 54.8, "text": "From questions to *practical outcomes.*" },
+    { "from": 55.2, "to": 69.8, "text": "Your choice. *Your conversation.*" }
+  ],
+
+  "slots": [
+    {
+      "id": "s2-hello",
+      "scene": 2,
+      "start": 10.6,
+      "end": 19.8,
+      "keepAudio": true,
+      "pills": [
+        { "from": 10.8, "to": 15.0, "mode": "typed", "text": "Hi Sem, what can you help me with?" },
+        { "from": 15.2, "to": 19.6, "mode": "voice", "text": "Type it or say it — switch anytime" }
+      ],
+      "record": "Type “Hi Sem, what can you help me with?”, send, let Sem's full reply (text + voice) play. Then switch to voice input once to show the toggle."
+    },
+    {
+      "id": "s3-agentic",
+      "scene": 3,
+      "start": 20.0,
+      "end": 23.0,
+      "pills": [{ "mode": "typed", "text": "Explain agentic AI in simple terms." }],
+      "record": "Type the prompt exactly, send, record Sem's actual answer. Trim to the most readable 3 s of the answer."
+    },
+    {
+      "id": "s3-plan",
+      "scene": 3,
+      "start": 23.0,
+      "end": 26.0,
+      "pills": [{ "mode": "typed", "text": "Help me plan my day." }],
+      "record": "Type the prompt exactly, send, record Sem's actual answer."
+    },
+    {
+      "id": "s3-summarize",
+      "scene": 3,
+      "start": 26.0,
+      "end": 29.0,
+      "pills": [{ "mode": "typed", "text": "Summarize this information." }],
+      "record": "Paste a short paragraph, then the prompt. Record Sem's actual summary."
+    },
+    {
+      "id": "s3-email",
+      "scene": 3,
+      "start": 29.0,
+      "end": 32.0,
+      "pills": [{ "mode": "typed", "text": "Help me write a professional email." }],
+      "record": "Type the prompt (add a one-line context), record Sem's actual draft."
+    },
+    {
+      "id": "s3-code",
+      "scene": 3,
+      "start": 32.0,
+      "end": 35.0,
+      "keepAudio": true,
+      "pills": [{ "mode": "typed", "text": "Explain this code step by step." }],
+      "record": "Paste a short function, then the prompt. Record Sem's actual explanation (with voice playback if supported)."
+    },
+    {
+      "id": "s5-typed",
+      "scene": 5,
+      "start": 55.0,
+      "end": 61.0,
+      "keepAudio": true,
+      "pills": [{ "mode": "typed", "text": "Explain cloud computing." }],
+      "record": "Type “Explain cloud computing.”, send, record the answer."
+    },
+    {
+      "id": "s5-voice",
+      "scene": 5,
+      "start": 61.0,
+      "end": 70.0,
+      "keepAudio": true,
+      "pills": [{ "mode": "voice", "text": "Can you give me a real-world example?" }],
+      "record": "In the SAME conversation, ask aloud via Sem's voice input: “Can you give me a real-world example?”. Record Sem's spoken + text reply with system audio."
+    },
+    {
+      "id": "s6-clean",
+      "scene": 6,
+      "start": 70.0,
+      "end": 75.6,
+      "pills": [],
+      "record": "A clean, idle view of Sem's interface (empty or tidy conversation). Slow scroll or no motion."
+    }
+  ],
+
+  "featureWindow": [35.0, 55.0],
+  "features": [
+    {
+      "id": "s4-notes",
+      "title": "Notes → action items",
+      "prompt": "Sem, help me organize these notes into clear action items.",
+      "verified": false,
+      "record": "Paste rough meeting notes, send the prompt, record Sem's actual action-item list."
+    },
+    {
+      "id": "s4-files",
+      "title": "Workspace files",
+      "prompt": "Sem, open my project notes and summarize them.",
+      "verified": false,
+      "record": "ONLY if Sem can work with files in the user's workspace: show the instruction, Sem's response, and the resulting action."
+    },
+    {
+      "id": "s4-browse",
+      "title": "Web browsing",
+      "prompt": "Sem, check live.semdok.com and tell me what's new.",
+      "verified": false,
+      "record": "ONLY if Sem can browse websites: show the instruction, Sem's response, and the page it used."
+    },
+    {
+      "id": "s4-code",
+      "title": "Write & explain code",
+      "prompt": "Sem, write a function that validates an email address and explain it.",
+      "verified": false,
+      "record": "Show Sem writing the code and its explanation."
+    },
+    {
+      "id": "s4-schedule",
+      "title": "Scheduling",
+      "prompt": "Sem, schedule a team review for Friday at 3 PM.",
+      "verified": false,
+      "record": "ONLY if Sem can actually create tasks/events: show the instruction, Sem's confirmation, and the created item."
+    }
+  ]
+}

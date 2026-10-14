@@ -1,0 +1,15 @@
+{
+  "name": "sem-promo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Renders the 'Stop Just Chatting with AI — Start Working with Sem' promo video.",
+  "scripts": {
+    "preview": "node render.mjs --mode preview",
+    "final": "node render.mjs --mode final",
+    "still": "node render.mjs --still"
+  },
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

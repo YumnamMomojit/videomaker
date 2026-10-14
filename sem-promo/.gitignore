@@ -1,0 +1,6 @@
+node_modules
+build
+recordings/*
+!recordings/.gitkeep
+audio/*
+!audio/.gitkeep
