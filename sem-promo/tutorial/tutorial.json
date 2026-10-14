@@ -6,6 +6,7 @@
   "width": 1920,
   "height": 1080,
   "voice": "cmu_us_slt_arctic_hts",
+  "tts": {"engine": "kokoro", "recipe": "voice/sem_voice.json"},
   "privacyMasks": [
     {
       "rect": [0, 104, 1920, 47],
