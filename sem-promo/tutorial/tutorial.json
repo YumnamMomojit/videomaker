@@ -26,7 +26,7 @@
       "view": [0, -30, 1920, 1080],
       "heading": "Getting Started with *Sem*",
       "sub": "A quick tutorial · live.semdok.com",
-      "say": "Welcome! In this quick tutorial, you'll learn how to start talking with Sem, the AI companion by Sem dock."
+      "say": "Welcome! In this quick tutorial, you'll learn how to start talking with Sem, the AI companion by Semdok."
     },
     {
       "id": "open",
@@ -41,7 +41,7 @@
         }
       ],
       "caption": "Go to *live.semdok.com* in your browser.",
-      "say": "Step one. Open your browser and go to live dot sem dock dot com. Sem runs right in the web page, so there is nothing to install.",
+      "say": "Step one. Open your browser and go to live dot Semdok dot com. Sem runs right in the web page, so there is nothing to install.",
       "n": 1
     },
     {
@@ -156,7 +156,7 @@
       "view": [0, -30, 1920, 1080],
       "heading": "Start talking with *Sem*",
       "sub": "live.semdok.com",
-      "say": "That's it! Open live dot sem dock dot com and start your first conversation with Sem."
+      "say": "That's it! Open live dot Semdok dot com and start your first conversation with Sem."
     }
   ]
 }

@@ -26,6 +26,7 @@ const OUT = path.join(HERE, '..', 'build', 'tutorial');
 const LEAD = 0.6;   // silence before narration starts in a step
 const TAIL = 0.8;   // breathing room after narration
 const TITLE_MIN = 5;
+const CALLOUT_MIN = 5;  // steps with callouts stay up long enough to read them
 
 function parseArgs(argv) {
   const args = {};
@@ -71,38 +72,68 @@ function extractFrames(source, fps) {
   return {dir, count: fs.readdirSync(dir).filter((f) => f.endsWith('.jpg')).length};
 }
 
-/** Festival TTS → cleaned-up 48 kHz mono WAV, cached by text + voice. */
-function speak(text, voice) {
+const TRIM_SILENCE = 'silenceremove=start_periods=1:start_threshold=0.01,areverse,' +
+  'silenceremove=start_periods=1:start_threshold=0.01,areverse';
+
+/**
+ * Narration for every line, as cleaned-up 48 kHz mono WAVs cached by engine + recipe + text.
+ *
+ * - "kokoro": neural Kokoro-82M voice blended and EQ'd to sound like Sem (voice/sem_voice.json).
+ * - "festival": the offline Festival HTS voice, kept as a fallback.
+ */
+function speakAll(texts, tts) {
   const dir = path.join(OUT, 'tts');
   fs.mkdirSync(dir, {recursive: true});
-  const hash = crypto.createHash('sha1').update(voice + '|' + text).digest('hex').slice(0, 12);
-  const out = path.join(dir, `${hash}.wav`);
-  if (fs.existsSync(out)) return out;
-  const raw = path.join(dir, `${hash}.raw.wav`);
-  const res = spawnSync('text2wave', ['-eval', `(voice_${voice})`, '-o', raw], {input: text});
-  if (res.status !== 0) throw new Error(`text2wave failed: ${res.stderr}`);
-  // Warm the thin synthetic voice up a little and even out its level.
-  sh('ffmpeg', ['-loglevel', 'error', '-y', '-i', raw, '-af',
-    'highpass=f=70,lowpass=f=9000,equalizer=f=180:t=q:w=1:g=3,equalizer=f=3200:t=q:w=1.2:g=2,' +
-    'acompressor=threshold=0.08:ratio=3:attack=5:release=120:makeup=2,' +
-    'aecho=0.8:0.5:28|46:0.12|0.07,silenceremove=start_periods=1:start_threshold=0.01,areverse,' +
-    'silenceremove=start_periods=1:start_threshold=0.01,areverse,aresample=48000',
-    '-ac', '1', out]);
-  fs.rmSync(raw);
-  return out;
+  const recipePath = tts.engine === 'kokoro' ? path.join(HERE, tts.recipe) : null;
+  const flavour = recipePath ? fs.readFileSync(recipePath, 'utf8') : tts.voice;
+  const files = texts.map((text) => {
+    const hash = crypto.createHash('sha1').update(`${tts.engine}|${flavour}|${text}`).digest('hex').slice(0, 12);
+    return {text, out: path.join(dir, `${hash}.wav`), raw: path.join(dir, `${hash}.raw.wav`)};
+  });
+  const todo = files.filter((f) => !fs.existsSync(f.out));
+
+  if (todo.length && tts.engine === 'kokoro') {
+    const python = path.join(HERE, 'voice', '.venv', 'bin', 'python');
+    if (!fs.existsSync(python)) throw new Error('Kokoro voice not set up — run tutorial/voice/setup_voice.sh');
+    const res = spawnSync(python, [path.join(HERE, 'voice', 'tts_kokoro.py'), recipePath], {
+      input: JSON.stringify(todo.map((f) => ({text: f.text, out: f.raw}))), encoding: 'utf8',
+    });
+    if (res.status !== 0) throw new Error(`tts_kokoro.py failed: ${res.stderr}`);
+    for (const f of todo) {
+      sh('ffmpeg', ['-loglevel', 'error', '-y', '-i', f.raw, '-af', `${TRIM_SILENCE},aresample=48000`, '-ac', '1', f.out]);
+      fs.rmSync(f.raw);
+    }
+  } else {
+    for (const f of todo) {
+      const res = spawnSync('text2wave', ['-eval', `(voice_${tts.voice})`, '-o', f.raw], {input: f.text});
+      if (res.status !== 0) throw new Error(`text2wave failed: ${res.stderr}`);
+      // Warm the thin synthetic voice up a little and even out its level.
+      sh('ffmpeg', ['-loglevel', 'error', '-y', '-i', f.raw, '-af',
+        'highpass=f=70,lowpass=f=9000,equalizer=f=180:t=q:w=1:g=3,equalizer=f=3200:t=q:w=1.2:g=2,' +
+        'acompressor=threshold=0.08:ratio=3:attack=5:release=120:makeup=2,' +
+        `aecho=0.8:0.5:28|46:0.12|0.07,${TRIM_SILENCE},aresample=48000`,
+        '-ac', '1', f.out]);
+      fs.rmSync(f.raw);
+    }
+  }
+  return files.map((f) => f.out);
 }
 
 function buildTimeline(cfg) {
+  const tts = cfg.tts || {engine: 'festival', voice: cfg.voice};
+  const spoken = cfg.steps.filter((s) => s.say);
+  const voiceFiles = new Map(speakAll(spoken.map((s) => s.say), tts).map((f, i) => [spoken[i].id, f]));
   let t = 0;
   const steps = cfg.steps.map((s) => {
     const step = {...s, start: t};
     if (s.kind === 'play') {
       step.end = t + (s.play[1] - s.play[0]);
     } else {
-      step.voiceFile = speak(s.say, cfg.voice);
+      step.voiceFile = voiceFiles.get(s.id);
       step.voiceDur = duration(step.voiceFile);
       step.voiceAt = t + LEAD;
-      step.end = t + Math.max(LEAD + step.voiceDur + TAIL, s.kind === 'title' ? TITLE_MIN : 0);
+      const min = s.kind === 'title' ? TITLE_MIN : s.callouts?.length ? CALLOUT_MIN : 0;
+      step.end = t + Math.max(LEAD + step.voiceDur + TAIL, min);
     }
     step.end = +step.end.toFixed(3);
     t = step.end;
@@ -220,7 +251,7 @@ function writeSrt(timeline, file) {
     return `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`;
   };
   const cues = timeline.steps.filter((s) => s.say).map((s, i) =>
-    `${i + 1}\n${ts(s.voiceAt)} --> ${ts(s.voiceAt + s.voiceDur)}\n${s.say.replace(/sem dock/gi, 'SEMDOK').replace(/live dot SEMDOK dot com/gi, 'live.semdok.com')}\n`);
+    `${i + 1}\n${ts(s.voiceAt)} --> ${ts(s.voiceAt + s.voiceDur)}\n${s.say.replace(/sem ?dock|semdok/gi, 'SEMDOK').replace(/live dot SEMDOK dot com/gi, 'live.semdok.com')}\n`);
   fs.writeFileSync(file, cues.join('\n'));
 }
 
