@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RAG in Finance — Centre of AI, Indira University</title>
+<style>
+  :root {
+    --navy: #145584;
+    --navy-deep: #0c3a5c;
+    --teal: #259fa4;
+    --teal-soft: #e3f4f4;
+    --yellow: #f6c11c;
+    --ink: #11273b;
+    --muted: #55687b;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --line: #d8e2eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Segoe UI', 'Segoe UI Variable Text', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- background ---------- */
+  #bg { position: absolute; inset: 0; overflow: hidden; }
+  #dots {
+    position: absolute; inset: -40px;
+    background-image: radial-gradient(rgba(20, 85, 132, .13) 1.6px, transparent 1.7px);
+    background-size: 34px 34px;
+  }
+  .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+  #blob1 { width: 900px; height: 900px; right: -320px; top: -420px; background: radial-gradient(circle, rgba(37,159,164,.16), rgba(37,159,164,0) 68%); }
+  #blob2 { width: 1000px; height: 1000px; left: -420px; bottom: -560px; background: radial-gradient(circle, rgba(20,85,132,.14), rgba(20,85,132,0) 68%); }
+  #stripe { position: absolute; left: 0; top: 0; width: 14px; height: 100%; background: linear-gradient(var(--navy) 0 60%, var(--teal) 60% 92%, var(--yellow) 92%); }
+
+  /* ---------- persistent chrome ---------- */
+  #hdr-logo { position: absolute; top: 34px; right: 110px; height: 58px; }
+  #footer {
+    position: absolute; left: 120px; right: 110px; bottom: 26px; height: 34px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 21px; color: var(--muted); letter-spacing: .04em;
+  }
+  #footer b { color: var(--navy); font-weight: 700; }
+  #progress { position: absolute; left: 14px; bottom: 0; height: 6px; background: var(--teal); }
+
+  /* ---------- scenes ---------- */
+  .scene { position: absolute; inset: 0; padding: 92px 120px 110px 120px; display: none; }
+  .kicker {
+    font-size: 23px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--teal);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .kicker::before { content: ''; width: 46px; height: 4px; border-radius: 2px; background: var(--yellow); }
+  h2 { font-size: 60px; line-height: 1.14; font-weight: 700; color: var(--navy-deep); margin-top: 16px; max-width: 1450px; letter-spacing: -.01em; }
+  h2 em { font-style: normal; color: var(--teal); }
+  h3 { font-size: 33px; font-weight: 700; color: var(--navy-deep); line-height: 1.2; }
+  p { font-size: 26px; line-height: 1.42; color: var(--muted); }
+  b, strong { color: var(--ink); font-weight: 700; }
+
+  .card {
+    background: var(--card); border: 2px solid var(--line); border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(17, 39, 59, .07);
+  }
+  .ic {
+    width: 84px; height: 84px; border-radius: 22px; display: grid; place-items: center;
+    background: var(--teal-soft); color: var(--teal); flex: none;
+  }
+  .ic svg { width: 46px; height: 46px; }
+  .ic.navy { background: #e2ecf5; color: var(--navy); }
+  .ic.warn { background: #fdf3d6; color: #b98500; }
+  svg.icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* intro / outro */
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 120px; }
+  .big-logo { width: 618px; }
+  .title-xl { font-size: 96px; font-weight: 700; color: var(--navy-deep); line-height: 1.05; letter-spacing: -.015em; margin-top: 18px; }
+  .rag-chip {
+    display: inline-block; margin-top: 26px; padding: 10px 34px; border-radius: 999px;
+    background: var(--teal); color: #fff; font-size: 46px; font-weight: 700; letter-spacing: .12em;
+  }
+  .sub-xl { font-size: 40px; color: var(--muted); margin-top: 30px; }
+  .rule { width: 520px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--navy), var(--teal), var(--yellow)); margin-top: 36px; }
+  .presents { font-size: 26px; letter-spacing: .3em; text-transform: uppercase; color: var(--teal); font-weight: 700; margin-top: 46px; }
+
+  /* problem */
+  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 90px; }
+  .cards3 .card { padding: 48px 42px; min-height: 480px; }
+  .cards3 p { font-size: 28px; }
+  .cards3 h3 { margin: 30px 0 16px; }
+
+  /* RAG letters */
+  .rag3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 64px; }
+  .rag3 .card { padding: 38px 38px 42px; }
+  .letter {
+    width: 108px; height: 108px; border-radius: 26px; display: grid; place-items: center;
+    font-size: 70px; font-weight: 800; color: #fff; background: var(--navy);
+  }
+  .letter.t { background: var(--teal); }
+  .letter.y { background: var(--yellow); color: var(--navy-deep); }
+  .rag3 .head { display: flex; align-items: center; gap: 26px; margin-bottom: 22px; }
+  .rag3 h3 { font-size: 40px; }
+  .analogy {
+    margin-top: 44px; display: flex; align-items: center; gap: 28px; padding: 28px 38px;
+    background: #fffaf0; border: 2px solid #f3dfa0; border-left: 10px solid var(--yellow); border-radius: 18px;
+  }
+  .analogy p { color: var(--ink); font-size: 29px; }
+
+  /* pipeline */
+  .lane-label {
+    position: absolute; font-size: 22px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--navy); display: flex; align-items: center; gap: 12px;
+  }
+  .lane-label span { background: var(--navy); color: #fff; border-radius: 8px; padding: 2px 12px; letter-spacing: .04em; }
+  .lane-label.t { color: var(--teal); }
+  .lane-label.t span { background: var(--teal); }
+  .node {
+    position: absolute; width: 272px; height: 178px; padding: 20px 22px;
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(17, 39, 59, .07);
+  }
+  .node .nh { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .node .ni { width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; background: #e2ecf5; color: var(--navy); flex: none; }
+  .node .ni svg { width: 30px; height: 30px; }
+  .node h4 { font-size: 25px; line-height: 1.12; color: var(--navy-deep); font-weight: 700; }
+  .node p { font-size: 20px; line-height: 1.35; }
+  .node.q .ni { background: var(--teal-soft); color: var(--teal); }
+  .node.db { border-color: var(--navy); }
+  .node.ans { background: var(--teal); border-color: var(--teal); }
+  .node.ans h4, .node.ans p { color: #fff; }
+  .node.ans .ni { background: rgba(255,255,255,.2); color: #fff; }
+  .node.llm { border-color: var(--yellow); background: #fffaf0; }
+  .node.llm .ni { background: #fdf0c4; color: #a37400; }
+  #pipe-svg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  #pipe-svg path { fill: none; stroke: var(--navy); stroke-width: 4; stroke-linecap: round; }
+  #pipe-svg > path { marker-end: url(#hd-n); }
+  #pipe-svg path.t { stroke: var(--teal); marker-end: url(#hd-t); }
+  #pipe-svg path.y { stroke: #d9a400; marker-end: url(#hd-y); }
+  .pnote {
+    position: absolute; width: 624px; height: 142px; display: flex; align-items: center; gap: 22px; padding: 0 30px;
+    border: 2px dashed #9fb8cc; border-radius: 18px; background: rgba(255,255,255,.55);
+  }
+  .pnote .ni { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: #e2ecf5; color: var(--navy); flex: none; }
+  .pnote .ni svg { width: 32px; height: 32px; }
+  .pnote p { font-size: 24px; line-height: 1.4; }
+  .cap {
+    position: absolute; left: 120px; right: 120px; top: 862px; display: flex; align-items: center; gap: 22px;
+    padding: 22px 32px; border-radius: 18px; background: var(--navy-deep); color: #fff;
+  }
+  .cap .n { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--yellow); color: var(--navy-deep); display: grid; place-items: center; font-size: 28px; font-weight: 800; }
+  .cap p { color: #e8f1f8; font-size: 27px; line-height: 1.35; }
+  .cap p b { color: #fff; }
+
+  /* why finance */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 40px; margin-top: 64px; }
+  .pt { display: flex; gap: 28px; padding: 38px 38px; align-items: flex-start; }
+  .pt h3 { font-size: 31px; margin-bottom: 8px; }
+  .pt p { font-size: 25px; }
+  .tagline {
+    margin-top: 54px; font-size: 32px; font-weight: 600; color: var(--navy-deep);
+    display: flex; align-items: center; gap: 18px;
+  }
+  .tagline .ar { color: var(--teal); font-size: 40px; }
+
+  /* use cases */
+  .uc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 34px; margin-top: 44px; --hl: 0; }
+  .uc .card {
+    padding: 28px 32px; height: 318px; position: relative; display: flex; flex-direction: column;
+    border-color: color-mix(in srgb, var(--teal) calc(var(--hl) * 100%), var(--line));
+    box-shadow: 0 calc(14px + var(--hl) * 12px) calc(40px + var(--hl) * 20px) rgba(17, 39, 59, calc(.07 + var(--hl) * .08));
+    transform: translateY(calc(var(--hl) * -8px));
+  }
+  .uc .card .top { display: flex; align-items: center; gap: 22px; margin-bottom: 16px; }
+  .uc .ic { width: 70px; height: 70px; border-radius: 18px; }
+  .uc .ic svg { width: 38px; height: 38px; }
+  .uc h3 { font-size: 30px; }
+  .uc p { font-size: 23px; line-height: 1.4; flex: 1; }
+  .uc .src { font-size: 19px; color: var(--navy); font-weight: 600; letter-spacing: .02em; border-top: 2px dashed var(--line); padding-top: 12px; }
+  .uc .src span { color: var(--muted); font-weight: 400; }
+  .uc .num { position: absolute; top: 22px; right: 26px; font-size: 22px; font-weight: 800; color: #b9c8d6; }
+
+  /* example */
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px; margin-left: 24px; padding: 6px 18px; border-radius: 999px;
+    background: #fdf3d6; color: #8a6400; font-size: 21px; font-weight: 700; letter-spacing: .04em; text-transform: none;
+  }
+  .badge::before { display: none; }
+  .ex { display: flex; gap: 40px; margin-top: 40px; height: 640px; }
+  .chat { flex: 1.45; display: flex; flex-direction: column; overflow: hidden; }
+  .chat .bar {
+    display: flex; align-items: center; gap: 14px; padding: 18px 28px; border-bottom: 2px solid var(--line);
+    font-size: 23px; font-weight: 700; color: var(--navy-deep);
+  }
+  .chat .bar .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--teal); }
+  .chat .body { padding: 30px 32px; display: flex; flex-direction: column; gap: 26px; }
+  .bubble { max-width: 86%; padding: 22px 28px; border-radius: 22px; font-size: 27px; line-height: 1.45; }
+  .bubble.user { align-self: flex-end; background: var(--navy); color: #fff; border-bottom-right-radius: 6px; min-height: 84px; }
+  .bubble.bot { align-self: flex-start; background: #f1f6fa; color: var(--ink); border-bottom-left-radius: 6px; min-height: 84px; }
+  .slot { position: relative; display: flex; flex-direction: column; }
+  .slot .status { position: absolute; left: 4px; top: 26px; }
+  .status { display: flex; align-items: center; gap: 16px; font-size: 23px; color: var(--muted); }
+  .grounded { color: var(--teal); font-weight: 600; }
+  .grounded .m { width: 34px; height: 34px; border-radius: 50%; background: var(--teal-soft); display: grid; place-items: center; }
+  .grounded .m svg { width: 22px; height: 22px; }
+  .spin { width: 28px; height: 28px; border-radius: 50%; border: 4px solid var(--teal-soft); border-top-color: var(--teal); }
+  .chip {
+    display: inline-block; padding: 0 10px; margin: 0 2px; border-radius: 8px; background: var(--teal); color: #fff;
+    font-size: 21px; font-weight: 700; line-height: 32px; vertical-align: 2px;
+  }
+  .caret { display: inline-block; width: 3px; height: 30px; background: currentColor; vertical-align: -5px; margin-left: 2px; }
+  .srcs { flex: 1; display: flex; flex-direction: column; gap: 18px; }
+  .srcs .ttl { font-size: 22px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--navy); display: flex; align-items: center; gap: 12px; }
+  .srcs .ttl svg { width: 28px; height: 28px; }
+  .sc {
+    --hl: 0; padding: 20px 24px; position: relative;
+    border-color: color-mix(in srgb, var(--teal) calc(var(--hl) * 100%), var(--line));
+    background: color-mix(in srgb, #eaf7f7 calc(var(--hl) * 100%), #fff);
+  }
+  .sc .meta { display: flex; justify-content: space-between; align-items: center; font-size: 19px; color: var(--muted); margin-bottom: 6px; }
+  .sc .meta .id { display: inline-grid; place-items: center; width: 34px; height: 30px; border-radius: 8px; background: var(--navy); color: #fff; font-weight: 700; margin-right: 10px; }
+  .sc .meta .score { font-weight: 700; color: var(--teal); }
+  .sc h5 { font-size: 22px; color: var(--navy-deep); margin-bottom: 4px; }
+  .sc p { font-size: 20px; line-height: 1.4; font-style: italic; }
+  .note { font-size: 18px; color: var(--muted); }
+
+  /* research notebook */
+  .nb { display: flex; gap: 40px; margin-top: 40px; }
+  .srclist { width: 520px; flex: none; padding: 26px 28px; display: flex; flex-direction: column; gap: 14px; }
+  .srclist .sh { display: flex; justify-content: space-between; align-items: center; font-size: 25px; font-weight: 700; color: var(--navy-deep); margin-bottom: 6px; }
+  .srclist .add { font-size: 19px; font-weight: 700; color: var(--teal); border: 2px solid var(--teal); border-radius: 999px; padding: 4px 14px; }
+  .si { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 14px; background: #f3f7fa; font-size: 22px; color: var(--ink); }
+  .ty { flex: none; width: 72px; text-align: center; border-radius: 8px; padding: 3px 0; font-size: 15px; font-weight: 800; letter-spacing: .06em; color: #fff; }
+  .ty.pdf { background: #c0504d; } .ty.doc { background: var(--navy); } .ty.web { background: var(--teal); } .ty.vid { background: #d9a400; }
+  .sfoot { margin-top: auto; font-size: 18px; line-height: 1.4; color: var(--muted); border-top: 2px dashed var(--line); padding-top: 14px; }
+  .feats { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 26px; --hl: 0; }
+  .ft {
+    padding: 24px 26px; height: 262px; position: relative; overflow: hidden;
+    border-color: color-mix(in srgb, var(--teal) calc(var(--hl) * 100%), var(--line));
+    box-shadow: 0 calc(14px + var(--hl) * 12px) calc(40px + var(--hl) * 20px) rgba(17, 39, 59, calc(.07 + var(--hl) * .08));
+    transform: translateY(calc(var(--hl) * -8px));
+  }
+  .ft .ic { width: 62px; height: 62px; border-radius: 16px; margin-bottom: 14px; }
+  .ft .ic svg { width: 34px; height: 34px; }
+  .ft h3 { font-size: 27px; margin-bottom: 8px; }
+  .ft p { font-size: 21px; line-height: 1.4; }
+  .wave { position: absolute; right: 24px; top: 30px; height: 34px; display: flex; align-items: center; gap: 4px; }
+  .wave i { display: block; width: 5px; height: 10px; border-radius: 3px; background: var(--teal); }
+  .nbstrip {
+    margin-top: 26px; display: flex; align-items: center; gap: 18px; padding: 18px 28px; border-radius: 16px;
+    background: var(--navy-deep); color: #fff; font-size: 26px; font-weight: 600;
+  }
+  .nbstrip svg { width: 34px; height: 34px; color: var(--yellow); flex: none; }
+
+  /* best practice */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 70px; }
+  .two .card { padding: 36px 40px; }
+  .two .hd { display: flex; align-items: center; gap: 18px; font-size: 30px; font-weight: 700; margin-bottom: 18px; }
+  .two .hd.g { color: var(--teal); }
+  .two .hd.w { color: #a37400; }
+  .li { display: flex; gap: 20px; align-items: flex-start; padding: 26px 0; border-top: 2px solid #edf2f6; }
+  .li:first-of-type { border-top: 0; }
+  .li .m { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; margin-top: 2px; }
+  .li .m svg { width: 26px; height: 26px; }
+  .li .m.g { background: var(--teal-soft); color: var(--teal); }
+  .li .m.w { background: #fdf3d6; color: #b98500; }
+  .li p { font-size: 28px; color: var(--ink); }
+  .li p span { color: var(--muted); }
+
+  /* outro */
+  .thanks { font-size: 104px; font-weight: 700; color: var(--navy-deep); margin-top: 50px; letter-spacing: -.01em; }
+  .outro-sub { font-size: 36px; color: var(--muted); margin-top: 18px; }
+  .outro-org { margin-top: 44px; display: inline-flex; align-items: center; gap: 18px; padding: 16px 34px; border-radius: 999px; background: var(--navy); color: #fff; font-size: 30px; font-weight: 600; letter-spacing: .04em; }
+  .outro-org i { width: 12px; height: 12px; border-radius: 50%; background: var(--yellow); display: inline-block; }
+</style>
+</head>
+<body>
+<div id="bg">
+  <div id="dots"></div>
+  <div class="blob" id="blob1"></div>
+  <div class="blob" id="blob2"></div>
+  <div id="stripe"></div>
+</div>
+
+<!-- ============ 1. Intro ============ -->
+<section class="scene center" id="s-intro">
+  <img class="big-logo a logo-src" data-in="0.2" data-fx="scale" data-dur="0.9" alt="Indira University">
+  <div class="presents a" data-in="1.1">Centre of AI presents</div>
+  <div class="title-xl a" data-in="1.6">Retrieval-Augmented Generation</div>
+  <div class="rag-chip a" data-in="2.3" data-fx="pop">RAG</div>
+  <div class="rule a" data-in="2.8" data-fx="wipe" data-dur="0.9"></div>
+  <div class="sub-xl a" data-in="3.3">What it is — and how it is used in finance</div>
+</section>
+
+<!-- ============ 2. The problem ============ -->
+<section class="scene" id="s-problem">
+  <div class="kicker a" data-in="0.2">01 · The problem</div>
+  <h2 class="a" data-in="0.5">Large language models are powerful —<br>but on their own, they fall short</h2>
+  <div class="cards3">
+    <div class="card a" data-in="1.8">
+      <div class="ic warn"><i data-icon="clock"></i></div>
+      <h3>Knowledge cut-off</h3>
+      <p>They only know their training data. A rate change or a circular issued last week is invisible to them.</p>
+    </div>
+    <div class="card a" data-in="4.3">
+      <div class="ic warn"><i data-icon="alert"></i></div>
+      <h3>Hallucinations</h3>
+      <p>When unsure, they can give confident but wrong answers — unacceptable where money and regulation are involved.</p>
+    </div>
+    <div class="card a" data-in="6.8">
+      <div class="ic warn"><i data-icon="lock"></i></div>
+      <h3>No access to your data</h3>
+      <p>Internal policies, loan files and reports were never part of their training, so they cannot answer about them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. What is RAG ============ -->
+<section class="scene" id="s-what">
+  <div class="kicker a" data-in="0.2">02 · What is RAG?</div>
+  <h2 class="a" data-in="0.5">RAG lets an AI model <em>look things up</em><br>in trusted documents before it answers</h2>
+  <div class="rag3">
+    <div class="card a" data-in="2.0">
+      <div class="head"><div class="letter">R</div><h3>Retrieve</h3></div>
+      <p>Search a trusted knowledge base for the passages most relevant to the question.</p>
+    </div>
+    <div class="card a" data-in="3.6">
+      <div class="head"><div class="letter t">A</div><h3>Augment</h3></div>
+      <p>Add those passages to the prompt, so the model has the facts in front of it.</p>
+    </div>
+    <div class="card a" data-in="5.2">
+      <div class="head"><div class="letter y">G</div><h3>Generate</h3></div>
+      <p>The language model writes an answer grounded in that context — and cites its sources.</p>
+    </div>
+  </div>
+  <div class="analogy a" data-in="7.6">
+    <div class="ic"><i data-icon="book"></i></div>
+    <p>Think of it as an <b>open-book exam</b>: instead of answering from memory, the model consults the right pages — and shows which pages it used.</p>
+  </div>
+</section>
+
+<!-- ============ 4. How it works ============ -->
+<section class="scene" id="s-how">
+  <div class="kicker a" data-in="0.2">03 · How RAG works</div>
+  <h2 class="a" data-in="0.5">Two stages: prepare the knowledge, then answer</h2>
+
+  <svg id="pipe-svg" viewBox="0 0 1920 1080">
+    <defs>
+      <marker id="hd-n" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#145584" stroke="none"/></marker>
+      <marker id="hd-t" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#259fa4" stroke="none"/></marker>
+      <marker id="hd-y" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#d9a400" stroke="none"/></marker>
+    </defs>
+    <!-- lane 1 -->
+    <path class="a" data-fx="draw" data-in="2.3" d="M392 376 L458 376" pathLength="1"/>
+    <path class="a" data-fx="draw" data-in="3.8" d="M744 376 L810 376" pathLength="1"/>
+    <!-- vector DB down to retrieve -->
+    <path class="a y" data-fx="draw" data-in="10.6" data-dur="0.8" d="M960 465 L960 610" pathLength="1"/>
+    <!-- lane 2 -->
+    <path class="a t" data-fx="draw" data-in="7.9" d="M392 711 L458 711" pathLength="1"/>
+    <path class="a t" data-fx="draw" data-in="9.4" d="M744 711 L810 711" pathLength="1"/>
+    <path class="a t" data-fx="draw" data-in="12.3" d="M1096 711 L1162 711" pathLength="1"/>
+    <path class="a t" data-fx="draw" data-in="14.6" d="M1448 711 L1514 711" pathLength="1"/>
+    <!-- question also goes straight to the LLM -->
+    <path class="a t" data-fx="draw" data-in="12.6" data-dur="1.0" d="M256 800 L256 835 L1312 835 L1312 812" pathLength="1" style="opacity: .55"/>
+  </svg>
+
+  <div class="lane-label a" data-in="1.0" style="left:120px; top:236px"><span>1</span> Indexing · done ahead of time</div>
+  <div class="node a" data-in="1.2" data-fx="pop" style="left:120px; top:287px">
+    <div class="nh"><div class="ni"><i data-icon="file"></i></div><h4>Documents</h4></div>
+    <p>Reports, policies, circulars, contracts</p>
+  </div>
+  <div class="node a" data-in="2.7" data-fx="pop" style="left:472px; top:287px">
+    <div class="nh"><div class="ni"><i data-icon="layers"></i></div><h4>Chunk &amp; embed</h4></div>
+    <p>Split into passages; turn each into a vector of numbers</p>
+  </div>
+  <div class="node db a" data-in="4.2" data-fx="pop" style="left:824px; top:287px">
+    <div class="nh"><div class="ni"><i data-icon="db"></i></div><h4>Vector database</h4></div>
+    <p>Stores passages so they can be searched by meaning</p>
+  </div>
+
+  <div class="pnote a" data-in="5.0" style="left:1176px; top:305px">
+    <div class="ni"><i data-icon="refresh"></i></div>
+    <p>When documents change, just <b>re-index</b> them — the LLM itself never needs retraining.</p>
+  </div>
+
+  <div class="lane-label t a" data-in="6.4" style="left:120px; top:571px"><span>2</span> Answering · at question time</div>
+  <div class="node q a" data-in="6.6" data-fx="pop" style="left:120px; top:622px">
+    <div class="nh"><div class="ni"><i data-icon="help"></i></div><h4>User question</h4></div>
+    <p>“What is the loan limit for large home loans?”</p>
+  </div>
+  <div class="node q a" data-in="8.3" data-fx="pop" style="left:472px; top:622px">
+    <div class="nh"><div class="ni"><i data-icon="hash"></i></div><h4>Embed question</h4></div>
+    <p>Same embedding model turns it into a vector</p>
+  </div>
+  <div class="node q a" data-in="9.8" data-fx="pop" style="left:824px; top:622px">
+    <div class="nh"><div class="ni"><i data-icon="search"></i></div><h4>Retrieve</h4></div>
+    <p>Fetch the top-k passages closest in meaning</p>
+  </div>
+  <div class="node llm a" data-in="12.7" data-fx="pop" style="left:1176px; top:622px">
+    <div class="nh"><div class="ni"><i data-icon="cpu"></i></div><h4>LLM</h4></div>
+    <p>Prompt = question + retrieved passages</p>
+  </div>
+  <div class="node ans a" data-in="15.0" data-fx="pop" style="left:1528px; top:622px">
+    <div class="nh"><div class="ni"><i data-icon="check"></i></div><h4>Grounded answer</h4></div>
+    <p>With citations to the source passages</p>
+  </div>
+
+  <div class="cap a" data-in="1.4" data-until="6.0">
+    <div class="n">1</div>
+    <p><b>Indexing:</b> documents are split into chunks and converted into <b>embeddings</b> — vectors of numbers that capture meaning — then stored in a vector database.</p>
+  </div>
+  <div class="cap a" data-in="6.6" data-until="12.0">
+    <div class="n">2</div>
+    <p><b>Retrieval:</b> the question is embedded the same way, and the passages whose vectors are most similar to it are fetched.</p>
+  </div>
+  <div class="cap a" data-in="12.5">
+    <div class="n">3</div>
+    <p><b>Generation:</b> the LLM receives the question <b>plus</b> the retrieved passages, and writes an answer that points back to its sources.</p>
+  </div>
+</section>
+
+<!-- ============ 5. Why finance ============ -->
+<section class="scene" id="s-why">
+  <div class="kicker a" data-in="0.2">04 · Why finance needs RAG</div>
+  <h2 class="a" data-in="0.5">Finance runs on documents, rules and numbers<br>that keep changing</h2>
+  <div class="grid2">
+    <div class="card pt a" data-in="1.6">
+      <div class="ic navy"><i data-icon="refresh"></i></div>
+      <div><h3>Information changes daily</h3><p>Interest rates, regulations, market news and product terms are updated constantly.</p></div>
+    </div>
+    <div class="card pt a" data-in="2.6">
+      <div class="ic navy"><i data-icon="book"></i></div>
+      <div><h3>Answers must be traceable</h3><p>Regulators and auditors expect every answer to point back to a source.</p></div>
+    </div>
+    <div class="card pt a" data-in="3.6">
+      <div class="ic navy"><i data-icon="lock"></i></div>
+      <div><h3>Data is highly sensitive</h3><p>Customer and transaction data must stay inside the institution's controlled systems.</p></div>
+    </div>
+    <div class="card pt a" data-in="4.6">
+      <div class="ic navy"><i data-icon="layers"></i></div>
+      <div><h3>Volumes are enormous</h3><p>Annual reports, filings, contracts and policies run to thousands of pages.</p></div>
+    </div>
+  </div>
+  <div class="tagline a" data-in="6.6"><span class="ar">→</span> RAG gives fresh, sourced answers from the institution's own documents — without retraining the model.</div>
+</section>
+
+<!-- ============ 6. Use cases ============ -->
+<section class="scene" id="s-uses">
+  <div class="kicker a" data-in="0.2">05 · Use cases in finance</div>
+  <h2 class="a" data-in="0.5">Where RAG is being applied in finance</h2>
+  <div class="uc">
+    <div class="card a" data-in="1.4" data-hl="1.4,5.6">
+      <div class="num">01</div>
+      <div class="top"><div class="ic"><i data-icon="book"></i></div><h3>Regulatory &amp;<br>compliance Q&amp;A</h3></div>
+      <p>Ask questions across regulatory circulars and internal compliance manuals; get answers that cite the exact clause.</p>
+      <div class="src">Retrieves from <span>· circulars, policy manuals</span></div>
+    </div>
+    <div class="card a" data-in="5.6" data-hl="5.6,9.8">
+      <div class="num">02</div>
+      <div class="top"><div class="ic"><i data-icon="chart"></i></div><h3>Financial report<br>analysis</h3></div>
+      <p>Summarise annual reports, filings and earnings-call transcripts; compare figures across quarters.</p>
+      <div class="src">Retrieves from <span>· reports, transcripts</span></div>
+    </div>
+    <div class="card a" data-in="9.8" data-hl="9.8,14.0">
+      <div class="num">03</div>
+      <div class="top"><div class="ic"><i data-icon="chat"></i></div><h3>Customer service<br>assistants</h3></div>
+      <p>Banking assistants that answer from the bank's current product terms, fees and FAQs — not from guesswork.</p>
+      <div class="src">Retrieves from <span>· product docs, FAQs</span></div>
+    </div>
+    <div class="card a" data-in="14.0" data-hl="14.0,18.2">
+      <div class="num">04</div>
+      <div class="top"><div class="ic"><i data-icon="card"></i></div><h3>Credit &amp; loan<br>underwriting</h3></div>
+      <p>Bring an applicant's documents together with the lending policy so analysts can review a case faster.</p>
+      <div class="src">Retrieves from <span>· loan files, credit policy</span></div>
+    </div>
+    <div class="card a" data-in="18.2" data-hl="18.2,22.4">
+      <div class="num">05</div>
+      <div class="top"><div class="ic"><i data-icon="shield"></i></div><h3>Fraud &amp; AML<br>investigation</h3></div>
+      <p>Surface similar past cases, alerts and investigator notes to support a new investigation.</p>
+      <div class="src">Retrieves from <span>· case notes, alert history</span></div>
+    </div>
+    <div class="card a" data-in="22.4" data-hl="22.4,26.6">
+      <div class="num">06</div>
+      <div class="top"><div class="ic"><i data-icon="trend"></i></div><h3>Investment<br>research</h3></div>
+      <p>Combine news, research notes and company filings into a cited briefing for analysts and advisors.</p>
+      <div class="src">Retrieves from <span>· news, research, filings</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. Example ============ -->
+<section class="scene" id="s-example">
+  <div class="kicker a" data-in="0.2">06 · RAG in action <span class="badge">Illustrative example · sample documents</span></div>
+  <h2 class="a" data-in="0.5">A bank's internal policy assistant</h2>
+  <div class="ex">
+    <div class="card chat a" data-in="1.0">
+      <div class="bar"><div class="dot"></div>Policy Assistant <span style="font-weight:400;color:var(--muted)">· answers from the bank's own policy documents</span></div>
+      <div class="body">
+        <div class="bubble user" data-type="1.6,40">What is the maximum loan-to-value ratio for home loans above ₹75 lakh?</div>
+        <div class="slot">
+        <div class="status a" data-fx="fade" data-in="4.0" data-until="6.3"><div class="spin"></div>Searching the policy knowledge base…</div>
+        <div class="bubble bot a" data-fx="fade" data-in="6.4" data-type="6.6,34">For home loans above ₹75 lakh, the maximum loan-to-value ratio is <b>75%</b> of the property value <span class="chip" data-ref="#src1">1</span>. Any deviation needs approval from the Zonal Credit Committee <span class="chip" data-ref="#src2">2</span>.</div>
+        </div>
+        <div class="status grounded a" data-in="12.2"><div class="m"><i data-icon="tick"></i></div>Grounded in 2 retrieved passages · sources shown to the user</div>
+      </div>
+    </div>
+    <div class="srcs">
+      <div class="ttl a" data-in="4.4"><i data-icon="search"></i> Retrieved passages</div>
+      <div class="card sc a" id="src1" data-in="4.8" data-fx="right">
+        <div class="meta"><span><span class="id">1</span>Home Loan Credit Policy · §3.1</span><span class="score">0.91</span></div>
+        <h5>Loan-to-value limits</h5>
+        <p>“For loans above ₹75 lakh, the LTV ratio shall not exceed 75% of the property value…”</p>
+      </div>
+      <div class="card sc a" id="src2" data-in="5.2" data-fx="right">
+        <div class="meta"><span><span class="id">2</span>Home Loan Credit Policy · §7.4</span><span class="score">0.86</span></div>
+        <h5>Exceptions and approvals</h5>
+        <p>“Any deviation from LTV limits requires approval of the Zonal Credit Committee…”</p>
+      </div>
+      <div class="card sc a" id="src3" data-in="5.6" data-fx="right">
+        <div class="meta"><span><span class="id">3</span>Customer FAQ · Home loans</span><span class="score">0.72</span></div>
+        <h5>How much can I borrow?</h5>
+        <p>“Eligibility depends on income, existing obligations and property value…”</p>
+      </div>
+      <div class="note a" data-in="6.0">Relevance scores = similarity between the question and each passage.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. Research notebook ============ -->
+<section class="scene" id="s-notebook">
+  <div class="kicker a" data-in="0.2">07 · Beyond Q&amp;A</div>
+  <h2 class="a" data-in="0.5">An AI research notebook built on RAG</h2>
+  <div class="nb">
+    <div class="card srclist a" data-in="0.9">
+      <div class="sh"><span>Your sources</span><span class="add">+ Add source</span></div>
+      <div class="si a" data-in="1.3" data-fx="right"><span class="ty pdf">PDF</span>Annual Report FY2024-25</div>
+      <div class="si a" data-in="1.7" data-fx="right"><span class="ty pdf">PDF</span>Regulatory circular — KYC norms</div>
+      <div class="si a" data-in="2.1" data-fx="right"><span class="ty doc">DOC</span>Q2 earnings-call transcript</div>
+      <div class="si a" data-in="2.5" data-fx="right"><span class="ty web">WEB</span>Monetary policy statement</div>
+      <div class="si a" data-in="2.9" data-fx="right"><span class="ty vid">VIDEO</span>Market outlook briefing</div>
+      <div class="sfoot a" data-in="3.3">PDFs · documents · web pages · videos · audio — each one is indexed for retrieval</div>
+    </div>
+    <div class="feats">
+      <div class="card ft a" data-in="4.0" data-hl="4.0,7.0">
+        <div class="ic"><i data-icon="chat"></i></div>
+        <h3>Grounded chat</h3>
+        <p>Ask anything — answers come only from your sources, with clickable citations.</p>
+      </div>
+      <div class="card ft a" data-in="6.6" data-hl="6.6,9.6">
+        <div class="ic"><i data-icon="file"></i></div>
+        <h3>Briefing documents</h3>
+        <p>One-click summaries of an annual report or a stack of circulars.</p>
+      </div>
+      <div class="card ft a" data-in="9.2" data-hl="9.2,12.2">
+        <div class="ic"><i data-icon="help"></i></div>
+        <h3>Study guides &amp; FAQs</h3>
+        <p>Auto-generated key terms, questions and quizzes for learners.</p>
+      </div>
+      <div class="card ft a" data-in="11.8" data-hl="11.8,14.8">
+        <div class="ic"><i data-icon="audio"></i></div>
+        <h3>Audio overviews</h3>
+        <p>Two AI voices discuss your documents as a podcast-style conversation.</p>
+        <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="card ft a" data-in="14.4" data-hl="14.4,17.4">
+        <div class="ic"><i data-icon="mindmap"></i></div>
+        <h3>Mind maps</h3>
+        <p>See how concepts connect across all of your sources.</p>
+      </div>
+      <div class="card ft a" data-in="17.0" data-hl="17.0,20.0">
+        <div class="ic"><i data-icon="calendar"></i></div>
+        <h3>Timelines</h3>
+        <p>Key events — rate changes, filings, deadlines — put in order.</p>
+      </div>
+    </div>
+  </div>
+  <div class="nbstrip a" data-in="19.6"><i data-icon="check"></i>Everything it creates is built only from the sources you add — and every claim links back to them.</div>
+</section>
+
+<!-- ============ 8. Getting it right ============ -->
+<section class="scene" id="s-right">
+  <div class="kicker a" data-in="0.2">08 · Getting it right</div>
+  <h2 class="a" data-in="0.5">The benefits — and what to watch out for</h2>
+  <div class="two">
+    <div class="card a" data-in="1.4">
+      <div class="hd g"><div class="ic"><i data-icon="check"></i></div>Benefits</div>
+      <div class="li a" data-in="2.0"><div class="m g"><i data-icon="tick"></i></div><p>Up-to-date answers <span>— update the documents, not the model</span></p></div>
+      <div class="li a" data-in="2.8"><div class="m g"><i data-icon="tick"></i></div><p>Traceable <span>— every answer links to its source passages</span></p></div>
+      <div class="li a" data-in="3.6"><div class="m g"><i data-icon="tick"></i></div><p>Private data stays private <span>— protected by the institution's access controls</span></p></div>
+    </div>
+    <div class="card a" data-in="4.6">
+      <div class="hd w"><div class="ic warn"><i data-icon="alert"></i></div>Watch-outs</div>
+      <div class="li a" data-in="5.2"><div class="m w"><i data-icon="excl"></i></div><p>Answers are only as good as retrieval <span>— measure and test it</span></p></div>
+      <div class="li a" data-in="6.0"><div class="m w"><i data-icon="excl"></i></div><p>Enforce permissions <span>— users see only documents they are allowed to</span></p></div>
+      <div class="li a" data-in="6.8"><div class="m w"><i data-icon="excl"></i></div><p>Keep a human in the loop <span>for high-stakes financial decisions</span></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. Outro ============ -->
+<section class="scene center" id="s-outro">
+  <img class="big-logo a logo-src" data-in="0.3" data-fx="scale" data-dur="0.9" alt="Indira University">
+  <div class="thanks a" data-in="1.0">Thank you</div>
+  <div class="outro-sub a" data-in="1.6">Retrieval-Augmented Generation (RAG) and its use cases in finance</div>
+  <div class="outro-org a" data-in="2.3" data-fx="pop"><i></i>Centre of AI · Indira University</div>
+</section>
+
+<img id="hdr-logo" class="logo-src" alt="">
+<div id="footer"><span><b>Centre of AI</b> · Indira University</span><span>Session · Retrieval-Augmented Generation (RAG)</span></div>
+<div id="progress"></div>
+
+<script>
+const ICONS = {
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  alert: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  layers: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  hash: '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  cpu: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+  check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  tick: '<polyline points="20 6 9 17 4 12"/>',
+  excl: '<line x1="12" y1="5" x2="12" y2="13"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+  chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  chat: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  card: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  trend: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+  audio: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  mindmap: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+};
+
+// Scene order and lengths (seconds). Every frame is a pure function of t.
+const SCENES = [
+  {id: 's-intro', dur: 7},
+  {id: 's-problem', dur: 14},
+  {id: 's-what', dur: 13},
+  {id: 's-how', dur: 21},
+  {id: 's-why', dur: 11},
+  {id: 's-uses', dur: 30},
+  {id: 's-example', dur: 17},
+  {id: 's-notebook', dur: 24},
+  {id: 's-right', dur: 12},
+  {id: 's-outro', dur: 7},
+];
+const BARE = new Set(['s-intro', 's-outro']); // no header logo / footer
+const FADE_IN = 0.5, FADE_OUT = 0.45;
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const easeBack = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+let TOTAL = 0;
+
+function setupTyping(el) {
+  const [start, cps] = el.dataset.type.split(',').map(Number);
+  const units = [];
+  let len = 0;
+  const walk = (node) => {
+    for (const ch of [...node.childNodes]) {
+      if (ch.nodeType === Node.TEXT_NODE) {
+        units.push({node: ch, text: ch.textContent, at: len});
+        len += ch.textContent.length;
+      } else if (ch.classList && ch.classList.contains('chip')) {
+        units.push({chip: ch, at: len});
+        len += 1;
+      } else {
+        walk(ch);
+      }
+    }
+  };
+  walk(el);
+  const caret = document.createElement('span');
+  caret.className = 'caret';
+  el.appendChild(caret);
+  return {el, start, cps, units, len, caret};
+}
+
+function init() {
+  const logo = window.LOGO_URL || 'assets/indira-logo-transparent.png';
+  document.querySelectorAll('.logo-src').forEach((img) => (img.src = logo));
+  document.querySelectorAll('i[data-icon]').forEach((i) => {
+    i.outerHTML = `<svg class="icon" viewBox="0 0 24 24">${ICONS[i.dataset.icon]}</svg>`;
+  });
+  let start = 0;
+  for (const s of SCENES) {
+    s.start = start;
+    start += s.dur;
+    s.el = document.getElementById(s.id);
+    s.anims = [...s.el.querySelectorAll('.a')].map((el) => ({
+      el,
+      at: +el.dataset.in || 0,
+      dur: +el.dataset.dur || (el.dataset.fx === 'draw' ? 0.6 : 0.7),
+      fx: el.dataset.fx || 'up',
+      until: el.dataset.until ? +el.dataset.until : null,
+    }));
+    s.hls = [...s.el.querySelectorAll('[data-hl]')].map((el) => ({el, range: el.dataset.hl.split(',').map(Number)}));
+    s.types = [...s.el.querySelectorAll('[data-type]')].map(setupTyping);
+    s.spins = [...s.el.querySelectorAll('.spin')];
+    s.waves = [...s.el.querySelectorAll('.wave i')];
+  }
+  TOTAL = start;
+  window.TOTAL = TOTAL;
+}
+
+function applyAnim(a, lt) {
+  const p = clamp((lt - a.at) / a.dur);
+  const out = a.until === null ? 1 : 1 - easeInOut(clamp((lt - a.until) / 0.4));
+  const e = easeOut(p);
+  const st = a.el.style;
+  if (a.fx === 'draw') {
+    st.strokeDasharray = '1';
+    st.strokeDashoffset = String(1 - easeInOut(p));
+    st.visibility = p > 0 ? 'visible' : 'hidden';
+    st.markerEnd = p >= 0.92 ? '' : 'none'; // arrowhead only once the line reaches it
+    return;
+  }
+  st.opacity = String(e * out);
+  st.visibility = e * out > 0.001 ? 'visible' : 'hidden';
+  switch (a.fx) {
+    case 'up': st.transform = `translateY(${(1 - e) * 34}px)`; break;
+    case 'right': st.transform = `translateX(${(1 - e) * 60}px)`; break;
+    case 'scale': st.transform = `scale(${0.92 + 0.08 * e})`; break;
+    case 'pop': st.transform = `scale(${0.8 + 0.2 * easeBack(p)})`; break;
+    case 'wipe': st.opacity = String(out); st.visibility = p > 0 ? 'visible' : 'hidden'; st.clipPath = `inset(0 ${(1 - easeInOut(p)) * 100}% 0 0)`; break;
+    default: break;
+  }
+}
+
+function applyTyping(ty, lt, s) {
+  const n = Math.floor((lt - ty.start) * ty.cps);
+  for (const u of ty.units) {
+    const k = n - u.at;
+    if (u.node) u.node.textContent = u.text.slice(0, clamp(k, 0, u.text.length));
+    else {
+      const shown = k > 0;
+      u.chip.style.visibility = shown ? 'visible' : 'hidden';
+      u.chip.style.display = shown ? 'inline-block' : 'none';
+      // A citation lights up the passage it points to.
+      const target = s.el.querySelector(u.chip.dataset.ref);
+      if (target) target.style.setProperty('--hl', String(easeOut(clamp((lt - ty.start - u.at / ty.cps) / 0.4))));
+    }
+  }
+  const typing = n >= 0 && n < ty.len;
+  const blink = Math.floor(lt * 2.2) % 2 === 0;
+  ty.caret.style.visibility = (typing || (n >= ty.len && blink && lt - ty.start - ty.len / ty.cps < 1.5)) ? 'visible' : 'hidden';
+}
+
+function renderAt(t) {
+  document.getElementById('dots').style.transform = `translate(${(t * 6) % 34}px, ${(t * 3) % 34}px)`;
+  document.getElementById('blob1').style.transform = `translate(${Math.sin(t / 9) * 60}px, ${Math.cos(t / 11) * 40}px)`;
+  document.getElementById('blob2').style.transform = `translate(${Math.cos(t / 10) * 70}px, ${Math.sin(t / 8) * 40}px)`;
+  document.getElementById('progress').style.width = `${clamp(t / TOTAL) * 1906}px`;
+
+  let chrome = 0;
+  SCENES.forEach((s, i) => {
+    const lt = t - s.start;
+    if (lt < 0 || lt >= s.dur) { s.el.style.display = 'none'; return; }
+    s.el.style.display = s.el.classList.contains('center') ? 'flex' : 'block';
+    const fin = i === 0 ? 1 : clamp(lt / FADE_IN);
+    const fout = i === SCENES.length - 1 ? 1 : clamp((s.dur - lt) / FADE_OUT);
+    const vis = easeInOut(Math.min(fin, fout));
+    s.el.style.opacity = String(vis);
+    if (!BARE.has(s.id)) {
+      // Keep the header/footer steady between two content scenes.
+      const prevBare = i > 0 && BARE.has(SCENES[i - 1].id);
+      const nextBare = i < SCENES.length - 1 && BARE.has(SCENES[i + 1].id);
+      chrome = Math.min(prevBare ? easeInOut(fin) : 1, nextBare ? easeInOut(fout) : 1);
+    }
+    for (const a of s.anims) applyAnim(a, lt);
+    for (const h of s.hls) {
+      const [a, b] = h.range;
+      const v = Math.min(clamp((lt - a) / 0.4), 1 - clamp((lt - b) / 0.5));
+      h.el.style.setProperty('--hl', String(easeInOut(v)));
+    }
+    for (const ty of s.types) applyTyping(ty, lt, s);
+    for (const sp of s.spins) sp.style.transform = `rotate(${lt * 400}deg)`;
+    s.waves.forEach((w, k) => {
+      const h = Math.abs(Math.sin(lt * 5.2 + k * 0.8)) * (0.55 + 0.45 * Math.sin(lt * 1.7 + k * 1.3));
+      w.style.height = `${6 + 26 * Math.abs(h)}px`;
+    });
+  });
+  document.getElementById('hdr-logo').style.opacity = String(chrome);
+  document.getElementById('footer').style.opacity = String(chrome);
+}
+
+window.renderAt = renderAt;
+window.init = init;
+if (!window.DEFER_INIT) {
+  window.addEventListener('DOMContentLoaded', () => {
+    init();
+    const q = new URLSearchParams(location.search).get('t');
+    renderAt(q ? +q : 0);
+  });
+}
+</script>
+</body>
+</html>

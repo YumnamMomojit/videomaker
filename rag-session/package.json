@@ -1,0 +1,14 @@
+{
+  "name": "rag-session",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Renders the Centre of AI, Indira University session video: What is RAG and its use cases in finance.",
+  "scripts": {
+    "render": "node render.mjs",
+    "still": "node render.mjs --still"
+  },
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}
